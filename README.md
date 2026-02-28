@@ -18,7 +18,7 @@ Jobportale basieren meist auf starren Keyword-Suchen. Das führt oft zu falschen
 
 Dieses Projekt nutzt einen **zweistufigen, Token-effizienten KI-Prozess** (orchestriert in `scripts/main.py`), um Jobs intelligenter zu filtern:
 
-1. **Stage 1 (Breite API-Suche & Shortlisting):** Das Skript ruft zunächst basierend auf den Parametern in `config/job_search_config.env` neue Jobs über die Schnittstelle der Arbeitsagentur ab. Ein KI-Modell bewertet dann grob Jobtitel und Arbeitgeber anhand Ihres Profils (`config/candidate_profile.md`). Alles, was im Entferntesten passen könnte, wird großzügig in die engere Wahl (Shortlist) gezogen.
+1. **Stage 1 (Breite API-Suche & Shortlisting):** Das Skript ruft zunächst basierend auf den Parametern in `config/job_search_config.yml` neue Jobs über die Schnittstelle der Arbeitsagentur ab. Ein KI-Modell bewertet dann grob Jobtitel und Arbeitgeber anhand Ihres Profils (`config/candidate_profile.md`). Alles, was im Entferntesten passen könnte, wird großzügig in die engere Wahl (Shortlist) gezogen.
 2. **Stage 2 (Deep Dive & Auswahl):** Für die Kandidaten der Shortlist werden nun die kompletten Stellenbeschreibungen geladen. Die KI liest die Ausschreibungen inklusive Beschreibungstext. Sie versteht den Kontext – zum Beispiel ob eine Technologie zwingend gefordert wird oder nur optional ist, ob es sich um eine interne Rolle statt Consulting handelt, und ob die Vertragsbedingungen (wie Unbefristung) passen.
 3. **Individuelle Begründung:** Die KI wählt die besten Matches aus und generiert für jeden Job eine individuelle Begründung, die erklärt, *warum* diese Stelle perfekt zu den Anforderungen aus der Konfiguration passt.
 
@@ -49,7 +49,7 @@ OPENAI_API_KEY=ihr_schluessel_hier
 Bearbeiten Sie diese Dateien:
 
 - `config/candidate_profile.md` - Ihr Profil, Einschränkungen und Präferenzen
-- `config/job_search_config.env` - Suchbegriffe, Ort, Umkreis, Aktualität
+- `config/job_search_config.yml` - Suchbegriffe, Ort, Umkreis, Aktualität
 
 ## 4) Ausführen
 

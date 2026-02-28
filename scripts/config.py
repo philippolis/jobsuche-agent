@@ -1,4 +1,5 @@
 import os
+import yaml
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -18,7 +19,20 @@ def get_search_config_path() -> Path:
     override = os.getenv("JOB_ALERT_SEARCH_CONFIG_FILE")
     if override:
         return Path(override).expanduser()
-    return CONFIG_DIR / "job_search_config.env"
+    return CONFIG_DIR / "job_search_config.yml"
+
+def get_search_config() -> dict:
+    """Load and parse the job search configuration YAML file."""
+    config_path = get_search_config_path()
+    if config_path.exists():
+        with open(config_path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    print(f"[warn] Search config not found at {config_path}. Using built-in defaults.")
+    return {}
+
+def get_llm_model() -> str:
+    """Get the OpenAI model from the environment with a fallback."""
+    return os.getenv("OPENAI_MODEL", "gpt-5.2")
 
 def get_candidate_profile_path() -> Path:
     """Get the path to the candidate profile Markdown file."""
@@ -47,10 +61,3 @@ def load_project_environment() -> None:
     if env_path.exists():
         load_dotenv(env_path)
 
-    search_config_path = get_search_config_path()
-    if search_config_path.exists():
-        load_dotenv(search_config_path)
-    else:
-        print(
-            f"[warn] Search config not found at {search_config_path}. Using built-in defaults."
-        )

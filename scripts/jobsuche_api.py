@@ -16,10 +16,16 @@ import re
 import shlex
 import sys
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
+
+try:
+    from config import get_search_config
+except ImportError:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from config import get_search_config
 
 API_BASE = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/jobs"
 JOB_DETAIL_BASE = "https://www.arbeitsagentur.de/jobsuche/jobdetail/{refnr}"
@@ -182,13 +188,15 @@ def fetch_job_details(refnr: str) -> Dict:
 
 
 def fetch_all_matching_jobs() -> Dict[str, Any]:
-    """Dynamically query the Jobsuche API for jobs based on current environment variables and deduplicate results."""
+    """Dynamically query the Jobsuche API for jobs based on current definition and deduplicate results."""
 
-    terms_str = os.getenv("SEARCH_TERMS", "")
-    terms = shlex.split(terms_str) if terms_str else [""]
-    where = os.getenv("SEARCH_WHERE", "Berlin")
-    radius_km = int(os.getenv("SEARCH_RADIUS_KM", 40))
-    days = int(os.getenv("SEARCH_DAYS", 1))
+    search_config = get_search_config().get("search", {})
+    terms = search_config.get("terms", [""])
+    if not terms:
+        terms = [""]
+    where = search_config.get("where", "Berlin")
+    radius_km = int(search_config.get("radius_km", 40))
+    days = int(search_config.get("days", 1))
 
     raw_jobs: List[Dict] = []
     query_count = 0

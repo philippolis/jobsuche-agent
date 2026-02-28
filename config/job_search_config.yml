@@ -1,0 +1,13 @@
+search:
+  terms:
+    - data
+    - analytics
+    - python
+    - sql
+    - machine learning
+  where: Berlin
+  radius_km: 40
+  
+  # Only jobs published within N days
+  # Allowed values: 0 (today), 1 (yesterday), 7 (1 week), 14 (2 weeks), 28 (4 weeks).
+  days: 7

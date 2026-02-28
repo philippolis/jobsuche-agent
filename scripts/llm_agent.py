@@ -4,6 +4,12 @@ from typing import List, Dict, Any
 from pydantic import BaseModel, Field
 from openai import OpenAI
 
+try:
+    from config import get_llm_model
+except ImportError:
+    import os as _os, sys as _sys
+    _sys.path.append(_os.path.dirname(_os.path.abspath(__file__)))
+    from config import get_llm_model
 class Stage1Response(BaseModel):
     shortlisted_refnrs: List[str] = Field(
         description="List of all job refnr IDs that could even remotely fit based on the summary"
@@ -54,7 +60,7 @@ def shortlist_relevant_jobs(
     for attempt in range(3):
         try:
             response1 = client.beta.chat.completions.parse(
-                model="gpt-5-mini",
+                model=get_llm_model(),
                 messages=[{"role": "user", "content": stage1_prompt}],
                 response_format=Stage1Response,
             )
@@ -91,7 +97,7 @@ def select_best_matches(
     for attempt in range(3):
         try:
             response2 = client.beta.chat.completions.parse(
-                model="gpt-5-mini",
+                model=get_llm_model(),
                 messages=[{"role": "user", "content": stage2_prompt}],
                 response_format=Stage2Response,
             )
