@@ -4,6 +4,7 @@ import webbrowser
 
 
 def generate_preview():
+    """Generate an HTML preview using dummy job data and open it in the default browser."""
     # Dummy jobs
     dummy_jobs = [
         {

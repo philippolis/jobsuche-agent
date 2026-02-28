@@ -26,6 +26,7 @@ DATA_DIR = ROOT_DIR / "data"
 
 
 def choose_existing_path(paths: List[Path]) -> Path | None:
+    """Return the first existing path from a list of paths, or None if none exist."""
     for path in paths:
         if path.exists():
             return path
@@ -33,6 +34,7 @@ def choose_existing_path(paths: List[Path]) -> Path | None:
 
 
 def get_env_file_path() -> Path:
+    """Get the path to the main .env file, allowing for environment variable overrides."""
     override = os.getenv("JOB_ALERT_ENV_FILE")
     if override:
         return Path(override).expanduser()
@@ -40,6 +42,7 @@ def get_env_file_path() -> Path:
 
 
 def get_search_config_path() -> Path:
+    """Get the path to the job search configuration file."""
     override = os.getenv("JOB_ALERT_SEARCH_CONFIG_FILE")
     if override:
         return Path(override).expanduser()
@@ -47,6 +50,7 @@ def get_search_config_path() -> Path:
 
 
 def get_candidate_profile_path() -> Path:
+    """Get the path to the candidate profile Markdown file."""
     override = os.getenv("JOB_ALERT_CANDIDATE_PROFILE_FILE")
     if override:
         return Path(override).expanduser()
@@ -54,6 +58,7 @@ def get_candidate_profile_path() -> Path:
 
 
 def get_past_suggestions_path() -> Path:
+    """Get the path to the JSON file storing past job suggestions."""
     override = os.getenv("JOB_ALERT_PAST_SUGGESTIONS_FILE")
     if override:
         return Path(override).expanduser()
@@ -61,6 +66,7 @@ def get_past_suggestions_path() -> Path:
 
 
 def get_reports_dir() -> Path:
+    """Get the directory path where generated job reports should be saved."""
     override = os.getenv("JOB_ALERT_REPORTS_DIR")
     if override:
         return Path(override).expanduser()
@@ -68,6 +74,7 @@ def get_reports_dir() -> Path:
 
 
 def load_project_environment() -> None:
+    """Load environment variables from project configuration files."""
     env_path = get_env_file_path()
     if env_path.exists():
         load_dotenv(env_path)
@@ -105,6 +112,7 @@ class Stage2Response(BaseModel):
 def verify_past_suggestions(
     file_path: str = str(DATA_DIR / "past_job_suggestions.json"),
 ) -> List[Dict[str, Any]]:
+    """Verify which past job suggestions are still active and remove inactive ones from the local record."""
     if not os.path.exists(file_path):
         return []
 
@@ -146,6 +154,7 @@ def verify_past_suggestions(
 def append_to_past_suggestions(
     matches, file_path: str = str(DATA_DIR / "past_job_suggestions.json")
 ):
+    """Append new job matches to the historical suggestions record."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     past_jobs = []
@@ -172,6 +181,7 @@ def append_to_past_suggestions(
 
 
 def read_profile_context() -> tuple[str, str]:
+    """Read the candidate profile and recently suggested jobs to build the context for the LLM."""
     candidate_profile_path = get_candidate_profile_path()
     try:
         with open(candidate_profile_path, "r", encoding="utf-8") as f:
@@ -205,6 +215,7 @@ def shortlist_candidates(
     candidate_profile: str,
     past_suggestions: str,
 ) -> List[str]:
+    """Use the LLM to aggressively shortlist all potentially relevant jobs based on summaries."""
     stage1_prompt = f"""
     You are a specialized Job Search Agent. Your goal is to shortlist ALL jobs from the latest API fetch that could even remotely fit. ("Wähle alle Jobs aus, die auch nur im Entferntesten passen könnten")
 
@@ -248,6 +259,7 @@ def shortlist_candidates(
 def fetch_deep_dive_details(
     summary_data: Dict[str, Any], shortlist: List[str]
 ) -> List[Dict[str, Any]]:
+    """Fetch the full description and details for each shortlisted candidate concurrently."""
     deep_dive_candidates = []
     jobs_to_fetch = [
         job
@@ -288,6 +300,7 @@ def fetch_deep_dive_details(
 def evaluate_top_jobs(
     client: OpenAI, candidate_profile: str, deep_dive_candidates: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
+    """Use the LLM to evaluate full job details and select the absolute best matches."""
     stage2_prompt = f"""
     You are a specialized Job Search Agent. Your goal is to select the most relevant jobs from the shortlisted candidates. You can select fewer or more depending on how many truly excellent matches there are (e.g., 2 to 5 jobs).
 
@@ -325,6 +338,7 @@ def evaluate_top_jobs(
 def build_and_save_reports(
     final_jobs: List[Dict[str, Any]], deep_dive_candidates: List[Dict[str, Any]]
 ):
+    """Generate and save the final job recommendations as both Markdown and HTML reports."""
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     reports_dir = get_reports_dir()
     report_path = reports_dir / f"job_report_{timestamp}.md"
@@ -403,6 +417,7 @@ def build_and_save_reports(
 
 
 def generate_report():
+    """Main pipeline execution: fetch jobs, filter via LLM, and generate the final report."""
     # Load configuration
     load_project_environment()
 
@@ -435,6 +450,7 @@ def generate_report():
 
 
 def fetch_jobs_dynamically():
+    """Dynamically query the Jobsuche API for jobs based on current environment variables and deduplicate results."""
     import shlex
 
     terms_str = os.getenv("SEARCH_TERMS", "")

@@ -27,6 +27,7 @@ API_HEADERS = {
 
 
 def normalize(text: str) -> str:
+    """Normalize text by converting to lowercase and replacing german umlauts/special characters."""
     text = (text or "").strip().lower()
     replacements = {
         "\u00e4": "ae",
@@ -42,6 +43,7 @@ def normalize(text: str) -> str:
 def fetch_text(
     url: str, headers: Dict[str, str] | None = None, timeout: int = 30
 ) -> Tuple[int, str]:
+    """Fetch raw text content from a URL via GET request."""
     request = Request(url, headers=headers or {})
     with urlopen(request, timeout=timeout) as response:
         status_code = getattr(response, "status", response.getcode())
@@ -52,11 +54,13 @@ def fetch_text(
 def fetch_json(
     url: str, headers: Dict[str, str] | None = None, timeout: int = 30
 ) -> Dict:
+    """Fetch and parse JSON content from a URL via GET request."""
     _, body = fetch_text(url, headers=headers, timeout=timeout)
     return json.loads(body)
 
 
 def parse_date(date_str: str) -> str:
+    """Safely parse a date string and return it in ISO format (YYYY-MM-DD), or empty string if invalid."""
     if not date_str:
         return ""
     try:
@@ -78,6 +82,7 @@ def search_jobs_page(
     arbeitgeber: str = "",
     berufsfeld: str = "",
 ) -> Tuple[List[Dict], int]:
+    """Query a single page of job alerts from the API given search criteria."""
     params = {
         "wo": where,
         "umkreis": str(radius_km),
@@ -111,6 +116,7 @@ def search_jobs_page(
 
 
 def choose_stronger(existing: Dict, candidate: Dict) -> Dict:
+    """Given two job dictionaries, return the one that has a more recent publication date."""
     existing_date = parse_date(existing.get("aktuelleVeroeffentlichungsdatum", ""))
     candidate_date = parse_date(candidate.get("aktuelleVeroeffentlichungsdatum", ""))
     if candidate_date > existing_date:
@@ -119,6 +125,7 @@ def choose_stronger(existing: Dict, candidate: Dict) -> Dict:
 
 
 def extract_ng_state(html: str) -> Dict:
+    """Extract and parse the JSON payload from the <script id="ng-state"> tag in an HTML page."""
     match = re.search(
         r'<script id="ng-state" type="application/json">(.*?)</script>',
         html,
@@ -134,6 +141,7 @@ def extract_ng_state(html: str) -> Dict:
 
 
 def fetch_detail_context(refnr: str) -> Dict:
+    """Fetch and extract detailed context for a specific job offering using its reference number."""
     detail_url = JOB_DETAIL_BASE.format(refnr=quote(refnr))
     out = {
         "detail_url": detail_url,
