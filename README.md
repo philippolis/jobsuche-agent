@@ -1,4 +1,4 @@
-# Job Alert Agent (Template)
+# Jobsuche Agent (Template)
 
 AI-assisted job discovery with the Arbeitsagentur `jobsuche-api` + OpenAI ranking.
 
