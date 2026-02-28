@@ -1,64 +1,64 @@
 # Jobsuche Agent (Template)
 
-AI-assisted job discovery with the Arbeitsagentur `jobsuche-api` + OpenAI ranking.
+KI-gestützte Jobsuche mit der `jobsuche-api` der Arbeitsagentur + OpenAI-Ranking.
 
-Use this repository as a starting point for your own personalized job alert workflow.
+Nutzen Sie dieses Repository als Ausgangspunkt für Ihren eigenen, personalisierten Job-Alert-Workflow.
 
-## What this project does
+## Was dieses Projekt macht
 
-- Fetches current jobs from the Arbeitsagentur API.
-- Uses OpenAI to shortlist and rank matching jobs.
-- Writes Markdown reports to `reports/`.
-- Tracks previously suggested jobs to prevent duplicates in `data/`.
+- Ruft aktuelle Stellenangebote über die API der Arbeitsagentur ab.
+- Nutzt OpenAI, um basierend auf den Stellenbeschreibungen passende Jobs auszuwählen.
+- Erstellt Markdown-Berichte im Ordner `reports/`.
+- Verfolgt bereits vorgeschlagene Jobs im Ordner `data/`, um Duplikate zu vermeiden.
 
-## 1) Create your own repo from this template
+## 1) Erstellen Sie Ihr eigenes Repo aus diesem Template
 
-1. Click **Use this template** on GitHub.
-2. Create your own repository.
-3. Clone your new repo locally.
+1. Klicken Sie auf GitHub auf **Use this template**.
+2. Erstellen Sie Ihr eigenes Repository.
+3. Klonen Sie Ihr neues Repo lokal.
 
-## 2) Local setup
+## 2) Lokale Einrichtung
 
-Install dependencies:
+Abhängigkeiten installieren:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Add your OpenAI key to `.env`:
+Fügen Sie Ihren OpenAI-Schlüssel zur Datei `.env` hinzu:
 
 ```env
-OPENAI_API_KEY=your_key_here
+OPENAI_API_KEY=ihr_schluessel_hier
 ```
 
-## 3) Personalize
+## 3) Personalisieren
 
-Edit these files:
+Bearbeiten Sie diese Dateien:
 
-- `config/candidate_profile.md` - your profile, constraints, and preferences
-- `config/job_search_config.env` - terms, location, radius, recency
+- `config/candidate_profile.md` - Ihr Profil, Einschränkungen und Präferenzen
+- `config/job_search_config.env` - Suchbegriffe, Ort, Umkreis, Aktualität
 
-## 4) Run
+## 4) Ausführen
 
 ```bash
 python3 scripts/generate_report.py
 ```
 
-Output:
+Ausgabe:
 
-- `reports/job_report_<timestamp>.md`
+- `reports/job_report_<zeitstempel>.md`
 
-## GitHub Actions usage (optional)
+## Nutzung mit GitHub Actions (optional)
 
-This template includes a workflow to get job suggestions sent via email:
+Diese Vorlage enthält einen GitHub Actions Workflow, um Jobvorschläge per E-Mail zu erhalten:
 
-- `.github/workflows/job_search.yml`: scheduled or manual run, sends report email, commits new reports.
+- `.github/workflows/job_search.yml`: Geplante oder manuelle Ausführung, sendet den Bericht per E-Mail, committet neue Berichte.
 
-### Automated scheduled email workflow (`job_search.yml`)
+### Automatisierter, geplanter E-Mail-Workflow (`job_search.yml`)
 
-Default schedule: every Saturday at `05:00 UTC` (edit the cron if needed).
+Standardzeitplan: jeden Samstag um `05:00 UTC` (passen Sie den Cron-Job bei Bedarf an).
 
-Required secrets:
+Erforderliche Secrets:
 
 - `OPENAI_API_KEY`
 - `SMTP_SERVER_ADDRESS`
@@ -66,21 +66,21 @@ Required secrets:
 - `SMTP_PASSWORD`
 - `SMTP_TO_EMAIL`
 
-Optional SMTP secrets:
+Optionale SMTP-Secrets:
 
-- `SMTP_SERVER_PORT` (defaults to `587`)
-- `SMTP_FROM_NAME` (defaults to `Job Alert Agent`)
+- `SMTP_SERVER_PORT` (Standard ist `587`)
+- `SMTP_FROM_NAME` (Standard ist `Job Alert Agent`)
 
-Setup steps:
+Einrichtungsschritte:
 
-1. Add the required secrets in your repository settings.
-2. Run `Job Search Workflow` once manually from the **Actions** tab to verify email delivery.
+1. Fügen Sie die erforderlichen Secrets in Ihren GitHub Repository-Einstellungen hinzu.
+2. Führen Sie den `Job Search Workflow` einmal manuell über den Tab **Actions** aus, um die E-Mail-Zustellung zu überprüfen.
 
-## Project structure
+## Projektstruktur
 
-- `scripts/generate_report.py` - main orchestrator
-- `scripts/fetch_jobsuche_jobs.py` - API fetch + detail enrichment
-- `scripts/report_template.html` - HTML report template
-- `config/` - your candidate config files
-- `data/` - deduplication history
-- `reports/` - generated reports
+- `scripts/generate_report.py` - Haupt-Orchestrierer
+- `scripts/fetch_jobsuche_jobs.py` - API-Abfrage + Anreicherung mit Stellenbeschreibungen
+- `scripts/report_template.html` - HTML-Berichtsvorlage
+- `config/` - Ihre Konfigurationsdateien für das Suchprofil
+- `data/` - Historie zur Deduplizierung
+- `reports/` - Generierte Berichte
