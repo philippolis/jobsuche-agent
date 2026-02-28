@@ -11,7 +11,10 @@ Design goals:
 from __future__ import annotations
 
 import json
+import os
 import re
+import shlex
+import sys
 from datetime import datetime
 from typing import Dict, List, Tuple
 from urllib.error import HTTPError, URLError
@@ -40,7 +43,7 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-def fetch_text(
+def _fetch_text(
     url: str, headers: Dict[str, str] | None = None, timeout: int = 30
 ) -> Tuple[int, str]:
     """Fetch raw text content from a URL via GET request."""
@@ -51,11 +54,11 @@ def fetch_text(
         return status_code, body
 
 
-def fetch_json(
+def _fetch_json(
     url: str, headers: Dict[str, str] | None = None, timeout: int = 30
 ) -> Dict:
     """Fetch and parse JSON content from a URL via GET request."""
-    _, body = fetch_text(url, headers=headers, timeout=timeout)
+    _, body = _fetch_text(url, headers=headers, timeout=timeout)
     return json.loads(body)
 
 
@@ -69,7 +72,7 @@ def parse_date(date_str: str) -> str:
         return ""
 
 
-def search_jobs_page(
+def fetch_jobs_page(
     what: str,
     where: str,
     radius_km: int,
@@ -106,7 +109,7 @@ def search_jobs_page(
         params["was"] = what
 
     url = f"{API_BASE}?{urlencode(params)}"
-    payload = fetch_json(url, headers=API_HEADERS)
+    payload = _fetch_json(url, headers=API_HEADERS)
     jobs = payload.get("stellenangebote") or []
     max_results = int(payload.get("maxErgebnisse") or len(jobs))
     for job in jobs:
@@ -115,7 +118,7 @@ def search_jobs_page(
     return jobs, max_results
 
 
-def choose_stronger(existing: Dict, candidate: Dict) -> Dict:
+def get_latest_job_version(existing: Dict, candidate: Dict) -> Dict:
     """Given two job dictionaries, return the one that has a more recent publication date."""
     existing_date = parse_date(existing.get("aktuelleVeroeffentlichungsdatum", ""))
     candidate_date = parse_date(candidate.get("aktuelleVeroeffentlichungsdatum", ""))
@@ -124,7 +127,7 @@ def choose_stronger(existing: Dict, candidate: Dict) -> Dict:
     return existing
 
 
-def extract_ng_state(html: str) -> Dict:
+def _extract_angular_state(html: str) -> Dict:
     """Extract and parse the JSON payload from the <script id="ng-state"> tag in an HTML page."""
     match = re.search(
         r'<script id="ng-state" type="application/json">(.*?)</script>',
@@ -140,7 +143,7 @@ def extract_ng_state(html: str) -> Dict:
         return {}
 
 
-def fetch_detail_context(refnr: str) -> Dict:
+def fetch_job_details(refnr: str) -> Dict:
     """Fetch and extract detailed context for a specific job offering using its reference number."""
     detail_url = JOB_DETAIL_BASE.format(refnr=quote(refnr))
     out = {
@@ -154,13 +157,13 @@ def fetch_detail_context(refnr: str) -> Dict:
         "detail_arbeitsorte": [],
     }
     try:
-        status_code, html = fetch_text(detail_url, timeout=30)
+        status_code, html = _fetch_text(detail_url, timeout=30)
         out["detail_http_status"] = status_code
     except (HTTPError, URLError) as exc:
         out["detail_error"] = str(exc)
         return out
 
-    state = extract_ng_state(html)
+    state = _extract_angular_state(html)
     detail = state.get("jobdetail") or {}
     out["description_full"] = detail.get("stellenangebotsBeschreibung", "")
     out["published_detail"] = parse_date(detail.get("datumErsteVeroeffentlichung", ""))
@@ -176,3 +179,90 @@ def fetch_detail_context(refnr: str) -> Dict:
             locations.append(f"{plz} {ort}".strip())
     out["detail_arbeitsorte"] = locations
     return out
+
+
+def fetch_all_matching_jobs() -> Dict[str, Any]:
+    """Dynamically query the Jobsuche API for jobs based on current environment variables and deduplicate results."""
+
+    terms_str = os.getenv("SEARCH_TERMS", "")
+    terms = shlex.split(terms_str) if terms_str else [""]
+    where = os.getenv("SEARCH_WHERE", "Berlin")
+    radius_km = int(os.getenv("SEARCH_RADIUS_KM", 40))
+    days = int(os.getenv("SEARCH_DAYS", 1))
+
+    raw_jobs: List[Dict] = []
+    query_count = 0
+
+    print(
+        f"Executing API search for terms: {terms} around {where} ({radius_km}km) within {days} days..."
+    )
+
+    for term in terms:
+        page = 1
+        total_pages = None
+        while True:
+            try:
+                jobs, max_results = fetch_jobs_page(
+                    what=term,
+                    where=where,
+                    radius_km=radius_km,
+                    days=days,
+                    size=100,
+                    page=page,
+                )
+                query_count += 1
+            except Exception as exc:
+                print(
+                    f"[warn] query failed term='{term}' page={page}: {exc}",
+                    file=sys.stderr,
+                )
+                break
+
+            raw_jobs.extend(jobs)
+            if total_pages is None:
+                total_pages = max(1, (max_results + 100 - 1) // 100)
+            if page >= total_pages:
+                break
+            page += 1
+
+    deduped: Dict[str, Dict] = {}
+    for job in raw_jobs:
+        refnr = (job.get("refnr") or "").strip()
+        if not refnr:
+            continue
+        current = deduped.get(refnr)
+        deduped[refnr] = get_latest_job_version(current, job) if current else job
+
+    selected_jobs = list(deduped.values())
+
+    candidates_summary: List[Dict] = []
+    for job in selected_jobs:
+        refnr = job.get("refnr", "")
+        summary_obj = {
+            "titel": job.get("titel", ""),
+            "beruf": job.get("beruf", ""),
+            "arbeitgeber": job.get("arbeitgeber", ""),
+            "refnr": refnr,
+            "arbeitsort": (job.get("arbeitsort") or {}).get("ort", ""),
+            "region": (job.get("arbeitsort") or {}).get("region", ""),
+            "entfernung_km": (job.get("arbeitsort") or {}).get("entfernung", ""),
+            "published_api": parse_date(job.get("aktuelleVeroeffentlichungsdatum", "")),
+            "query_term": job.get("_query_term", ""),
+        }
+        candidates_summary.append(summary_obj)
+
+    generated_at = datetime.now().replace(microsecond=0).isoformat() + "Z"
+
+    out_summary = {
+        "generated_at": generated_at,
+        "source": "jobsuche-api",
+        "query_terms": terms,
+        "query_count": query_count,
+        "raw_result_count": len(raw_jobs),
+        "deduped_count": len(deduped),
+        "candidate_count": len(selected_jobs),
+        "candidates": candidates_summary,
+    }
+
+    print(f"Found {len(selected_jobs)} unique candidates from the API search.")
+    return out_summary

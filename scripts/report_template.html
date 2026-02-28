@@ -119,10 +119,24 @@
 
 <body>
     <div class="header">
-        <h1>{job_count} neue Job-Empfehlungen</h1>
+        <h1>{{ job_count }} neue Job-Empfehlungen</h1>
     </div>
 
-    {jobs_html}
+    {% for job in jobs %}
+    <div class="job-item">
+        <h2 class="job-title"><a href="{{ job.detail_url }}">{{ job.title }}</a></h2>
+        <div class="job-meta">
+            <div>🏢 <b>{{ job.employer }}</b></div>
+            <div>📍 {{ job.location }}</div>
+        </div>
+        <div class="reason-text">
+            {{ job.reason }}
+        </div>
+        <div class="action-link">
+            <a href="{{ job.detail_url }}">→ Zur Stellenanzeige</a>
+        </div>
+    </div>
+    {% endfor %}
 
     <div class="footer">Automatisch generiert von <a href="https://github.com/philippolis/job-alert-agent">Job
             Alert Agent</a></div>
