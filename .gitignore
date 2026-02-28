@@ -1,0 +1,12 @@
+.DS_Store
+**/.DS_Store
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Generated preview files
+scripts/preview.html
+
+.agents/

@@ -1,0 +1,96 @@
+name: Job Search Workflow
+
+on:
+  schedule:
+    - cron: "0 5 * * 6" # 05:00 UTC every Saturday
+  workflow_dispatch:
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      JOB_ALERT_PAST_SUGGESTIONS_FILE: data/past_job_suggestions.json
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify OPENAI_API_KEY is present
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY is empty or missing."
+            exit 1
+          fi
+
+      - name: Run Job Search Agent
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python3 scripts/generate_report.py
+
+      - name: Get latest report
+        run: |
+          LATEST_REPORT=$(find reports -name "*.md" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2- || true)
+          LATEST_REPORT_HTML=$(find reports -name "*.html" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2- || true)
+          echo "latest_report=$LATEST_REPORT" >> "$GITHUB_ENV"
+          echo "latest_report_html=$LATEST_REPORT_HTML" >> "$GITHUB_ENV"
+
+      - name: Check SMTP configuration
+        id: smtp_check
+        env:
+          SMTP_SERVER_ADDRESS: ${{ secrets.SMTP_SERVER_ADDRESS }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_TO_EMAIL: ${{ secrets.SMTP_TO_EMAIL }}
+        run: |
+          if [ -n "$SMTP_SERVER_ADDRESS" ] && [ -n "$SMTP_USERNAME" ] && [ -n "$SMTP_PASSWORD" ] && [ -n "$SMTP_TO_EMAIL" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email report (SMTP configured)
+        uses: dawidd6/action-send-mail@v3
+        if: env.latest_report != '' && steps.smtp_check.outputs.configured == 'true'
+        with:
+          server_address: ${{ secrets.SMTP_SERVER_ADDRESS }}
+          server_port: ${{ secrets.SMTP_SERVER_PORT != '' && secrets.SMTP_SERVER_PORT || '587' }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "Latest Job Search Report"
+          to: ${{ secrets.SMTP_TO_EMAIL }}
+          from: ${{ format('{0} <{1}>', secrets.SMTP_FROM_NAME != '' && secrets.SMTP_FROM_NAME || 'Job Alert Agent', secrets.SMTP_USERNAME) }}
+          body: file://${{ env.latest_report }}
+          html_body: file://${{ env.latest_report_html }}
+
+      - name: Email fallback (runs only when SMTP is not configured)
+        if: env.latest_report != '' && steps.smtp_check.outputs.configured != 'true'
+        run: |
+          echo "Email not sent in this branch: SMTP credentials are not fully configured."
+          echo "Set SMTP_SERVER_ADDRESS, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_TO_EMAIL secrets."
+
+      - name: Commit and push results
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          rm -f reports/*.html
+          git add -f -A reports/
+
+          SUGGESTIONS_FILE="${JOB_ALERT_PAST_SUGGESTIONS_FILE:-data/past_job_suggestions.json}"
+          if [ -f "$SUGGESTIONS_FILE" ]; then
+            git add -f "$SUGGESTIONS_FILE"
+          fi
+
+          git commit -m "Automated: Update job suggestions and reports [skip ci]" || echo "No changes to commit"
+          git push
