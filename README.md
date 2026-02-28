@@ -16,7 +16,7 @@ Nutzen Sie dieses Repository als Ausgangspunkt für Ihren eigenen, personalisier
 
 Jobportale basieren meist auf starren Keyword-Suchen. Das führt oft zu falschen Ergebnissen (z. B. wenn ein Keyword nur beiläufig erwähnt wird) oder verpassten Chancen (wenn ein passender Job voneinander abweichende, aber bedeutungsähnliche Begriffe verwendet). 
 
-Dieses Projekt nutzt einen **zweistufigen, Token-effizienten KI-Prozess** (orchestriert in `scripts/generate_report.py`), um Jobs intelligenter zu filtern:
+Dieses Projekt nutzt einen **zweistufigen, Token-effizienten KI-Prozess** (orchestriert in `scripts/main.py`), um Jobs intelligenter zu filtern:
 
 1. **Stage 1 (Breite API-Suche & Shortlisting):** Das Skript ruft zunächst basierend auf den Parametern in `config/job_search_config.env` neue Jobs über die Schnittstelle der Arbeitsagentur ab. Ein KI-Modell bewertet dann grob Jobtitel und Arbeitgeber anhand Ihres Profils (`config/candidate_profile.md`). Alles, was im Entferntesten passen könnte, wird großzügig in die engere Wahl (Shortlist) gezogen.
 2. **Stage 2 (Deep Dive & Auswahl):** Für die Kandidaten der Shortlist werden nun die kompletten Stellenbeschreibungen geladen. Die KI liest die Ausschreibungen inklusive Beschreibungstext. Sie versteht den Kontext – zum Beispiel ob eine Technologie zwingend gefordert wird oder nur optional ist, ob es sich um eine interne Rolle statt Consulting handelt, und ob die Vertragsbedingungen (wie Unbefristung) passen.
@@ -54,7 +54,7 @@ Bearbeiten Sie diese Dateien:
 ## 4) Ausführen
 
 ```bash
-python3 scripts/generate_report.py
+python3 scripts/main.py
 ```
 
 Ausgabe:
@@ -134,8 +134,12 @@ python3 scripts/preview_email.py
 
 ## Projektstruktur
 
-- `scripts/generate_report.py` - Haupt-Orchestrierer
-- `scripts/fetch_jobsuche_jobs.py` - API-Abfrage + Anreicherung mit Stellenbeschreibungen
+- `scripts/main.py` - Haupt-Orchestrierer
+- `scripts/config.py` - Zentrale Konfiguration und Pfade
+- `scripts/jobsuche_api.py` - API-Abfrage bei der Bundesagentur für Arbeit
+- `scripts/llm_agent.py` - KI-Verarbeitung (Shortlisting & Deep Dive)
+- `scripts/past_job_suggestions.py` - Verwaltung bereits vorgeschlagener Jobs
+- `scripts/report_generator.py` - Erstellung des generierten Berichts
 - `scripts/report_template.html` - HTML-Berichtsvorlage
 - `config/` - Ihre Konfigurationsdateien für das Suchprofil
 - `data/` - Historie zur Deduplizierung
