@@ -38,10 +38,11 @@ Abhängigkeiten installieren:
 pip install -r requirements.txt
 ```
 
-Fügen Sie Ihren OpenAI-Schlüssel zur Datei `.env` hinzu:
+Fügen Sie Ihren OpenAI-Schlüssel zur Datei `.env` hinzu und konfigurieren Sie optional das verwendete Modell (Standard ist `gpt-5.2`):
 
 ```env
 OPENAI_API_KEY=ihr_schluessel_hier
+OPENAI_MODEL=gpt-5-mini # (oder gpt-5.2)
 ```
 
 ## 3) Personalisieren
