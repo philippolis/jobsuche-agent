@@ -32,7 +32,7 @@ def get_search_config() -> dict:
 
 def get_llm_model() -> str:
     """Get the OpenAI model from the environment with a fallback."""
-    return os.getenv("OPENAI_MODEL", "gpt-5.2")
+    return os.getenv("OPENAI_MODEL") or "gpt-5.2"
 
 def get_candidate_profile_path() -> Path:
     """Get the path to the candidate profile Markdown file."""

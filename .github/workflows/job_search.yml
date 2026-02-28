@@ -37,7 +37,8 @@ jobs:
       - name: Run Job Search Agent
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: python3 scripts/generate_report.py
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || secrets.OPENAI_MODEL }}
+        run: python3 scripts/main.py
 
       - name: Get latest report
         run: |
