@@ -84,3 +84,7 @@ Einrichtungsschritte:
 - `config/` - Ihre Konfigurationsdateien für das Suchprofil
 - `data/` - Historie zur Deduplizierung
 - `reports/` - Generierte Berichte
+
+## Disclaimer / Nutzungsbedingungen
+
+Bitte beachten Sie bei der Nutzung dieses Projekts die [Nutzungsbedingungen der Bundesagentur für Arbeit (BA)](https://www.arbeitsagentur.de/nutzungsbedingungen#2a-Nutzung-des-Portals%C2%A0). Insbesondere ist es nicht zulässig "bestehende Kommunikations- bzw. Programmierschnittstellen entgegen dem von der BA beabsichtigten Zweck zu verwenden". Außerdem sollten Aktivitäten, die "zu einer hohen Belastung der Infrastruktur führen können" unterlassen werden. Zusammengefasst sollte das Tool also im üblichen Rahmen, ausschließlich zur eigenen, privaten Stellensuche verwendet werden.
