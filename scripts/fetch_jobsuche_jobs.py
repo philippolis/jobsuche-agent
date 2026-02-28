@@ -10,13 +10,10 @@ Design goals:
 
 from __future__ import annotations
 
-import argparse
 import json
 import re
-import sys
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from datetime import datetime
+from typing import Dict, List, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
@@ -42,7 +39,9 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-def fetch_text(url: str, headers: Dict[str, str] | None = None, timeout: int = 30) -> Tuple[int, str]:
+def fetch_text(
+    url: str, headers: Dict[str, str] | None = None, timeout: int = 30
+) -> Tuple[int, str]:
     request = Request(url, headers=headers or {})
     with urlopen(request, timeout=timeout) as response:
         status_code = getattr(response, "status", response.getcode())
@@ -50,7 +49,9 @@ def fetch_text(url: str, headers: Dict[str, str] | None = None, timeout: int = 3
         return status_code, body
 
 
-def fetch_json(url: str, headers: Dict[str, str] | None = None, timeout: int = 30) -> Dict:
+def fetch_json(
+    url: str, headers: Dict[str, str] | None = None, timeout: int = 30
+) -> Dict:
     _, body = fetch_text(url, headers=headers, timeout=timeout)
     return json.loads(body)
 
@@ -84,7 +85,7 @@ def search_jobs_page(
         "size": str(size),
         "page": str(page),
     }
-    
+
     # Add optional filters only if they have values
     if angebotsart:
         params["angebotsart"] = angebotsart
@@ -167,5 +168,3 @@ def fetch_detail_context(refnr: str) -> Dict:
             locations.append(f"{plz} {ort}".strip())
     out["detail_arbeitsorte"] = locations
     return out
-
-

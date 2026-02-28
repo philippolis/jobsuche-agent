@@ -11,7 +11,12 @@ from pydantic import BaseModel, Field
 
 # Ensure we can import from the scripts directory
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from fetch_jobsuche_jobs import fetch_detail_context, search_jobs_page, choose_stronger, parse_date
+from fetch_jobsuche_jobs import (
+    fetch_detail_context,
+    search_jobs_page,
+    choose_stronger,
+    parse_date,
+)
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -71,25 +76,35 @@ def load_project_environment() -> None:
     if search_config_path.exists():
         load_dotenv(search_config_path)
     else:
-        print(f"[warn] Search config not found at {search_config_path}. Using built-in defaults.")
+        print(
+            f"[warn] Search config not found at {search_config_path}. Using built-in defaults."
+        )
 
 
 class Stage1Response(BaseModel):
-    shortlisted_refnrs: List[str] = Field(description="List of all job refnr IDs that could even remotely fit based on the summary")
+    shortlisted_refnrs: List[str] = Field(
+        description="List of all job refnr IDs that could even remotely fit based on the summary"
+    )
+
 
 class JobMatch(BaseModel):
     title: str
     employer: str
     location: str
     refnr: str = Field(description="The refnr of the job posting")
-    reason: str = Field(description="Short description explaining why the job fits the user's profile")
+    reason: str = Field(
+        description="Short description explaining why the job fits the user's profile"
+    )
     detail_url: str
+
 
 class Stage2Response(BaseModel):
     top_jobs: List[JobMatch]
 
 
-def verify_past_suggestions(file_path: str = str(DATA_DIR / "past_job_suggestions.json")) -> List[Dict[str, Any]]:
+def verify_past_suggestions(
+    file_path: str = str(DATA_DIR / "past_job_suggestions.json"),
+) -> List[Dict[str, Any]]:
     if not os.path.exists(file_path):
         return []
 
@@ -101,7 +116,7 @@ def verify_past_suggestions(file_path: str = str(DATA_DIR / "past_job_suggestion
 
     print(f"Verifying {len(past_jobs)} past suggestions for availability...")
     active_jobs = []
-    
+
     def check_job(job):
         refnr = job.get("refnr")
         if not refnr:
@@ -117,7 +132,9 @@ def verify_past_suggestions(file_path: str = str(DATA_DIR / "past_job_suggestion
             if result:
                 active_jobs.append(result)
 
-    print(f"Kept {len(active_jobs)} active past jobs, removed {len(past_jobs) - len(active_jobs)}.")
+    print(
+        f"Kept {len(active_jobs)} active past jobs, removed {len(past_jobs) - len(active_jobs)}."
+    )
 
     os.makedirs(os.path.dirname(file_path) or ".", exist_ok=True)
     with open(file_path, "w", encoding="utf-8") as f:
@@ -126,9 +143,11 @@ def verify_past_suggestions(file_path: str = str(DATA_DIR / "past_job_suggestion
     return active_jobs
 
 
-def append_to_past_suggestions(matches, file_path: str = str(DATA_DIR / "past_job_suggestions.json")):
+def append_to_past_suggestions(
+    matches, file_path: str = str(DATA_DIR / "past_job_suggestions.json")
+):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-    
+
     past_jobs = []
     if os.path.exists(file_path):
         with open(file_path, "r", encoding="utf-8") as f:
@@ -136,14 +155,16 @@ def append_to_past_suggestions(matches, file_path: str = str(DATA_DIR / "past_jo
                 past_jobs = json.load(f)
             except json.JSONDecodeError:
                 pass
-            
+
     for m in matches:
-        past_jobs.append({
-            "date": timestamp,
-            "company": m.get('company', 'N/A'),
-            "role": m.get('role', 'N/A'),
-            "refnr": m.get('refnr', 'N/A')
-        })
+        past_jobs.append(
+            {
+                "date": timestamp,
+                "company": m.get("company", "N/A"),
+                "role": m.get("role", "N/A"),
+                "refnr": m.get("refnr", "N/A"),
+            }
+        )
 
     os.makedirs(os.path.dirname(file_path) or ".", exist_ok=True)
     with open(file_path, "w", encoding="utf-8") as f:
@@ -153,25 +174,37 @@ def append_to_past_suggestions(matches, file_path: str = str(DATA_DIR / "past_jo
 def read_profile_context() -> tuple[str, str]:
     candidate_profile_path = get_candidate_profile_path()
     try:
-        with open(candidate_profile_path, 'r', encoding="utf-8") as f:
+        with open(candidate_profile_path, "r", encoding="utf-8") as f:
             candidate_profile = f.read()
     except FileNotFoundError:
         candidate_profile = "Find relevant IT jobs."
 
     past_suggestions_path = get_past_suggestions_path()
     past_jobs = verify_past_suggestions(str(past_suggestions_path))
-    
+
     if not past_jobs:
         past_suggestions = "None"
     else:
         # Send company, role, and refnr to save tokens
-        streamlined = [{"company": j.get("company"), "role": j.get("role"), "refnr": j.get("refnr")} for j in past_jobs]
+        streamlined = [
+            {
+                "company": j.get("company"),
+                "role": j.get("role"),
+                "refnr": j.get("refnr"),
+            }
+            for j in past_jobs
+        ]
         past_suggestions = json.dumps(streamlined, ensure_ascii=False)
 
     return candidate_profile, past_suggestions
 
 
-def shortlist_candidates(client: OpenAI, summary_data: Dict[str, Any], candidate_profile: str, past_suggestions: str) -> List[str]:
+def shortlist_candidates(
+    client: OpenAI,
+    summary_data: Dict[str, Any],
+    candidate_profile: str,
+    past_suggestions: str,
+) -> List[str]:
     stage1_prompt = f"""
     You are a specialized Job Search Agent. Your goal is to shortlist ALL jobs from the latest API fetch that could even remotely fit. ("Wähle alle Jobs aus, die auch nur im Entferntesten passen könnten")
 
@@ -187,17 +220,19 @@ def shortlist_candidates(client: OpenAI, summary_data: Dict[str, Any], candidate
     {past_suggestions}
 
     Available Jobs (Summary):
-    {json.dumps(summary_data.get('candidates', []), ensure_ascii=False)}
+    {json.dumps(summary_data.get("candidates", []), ensure_ascii=False)}
 
     Please analyze the 'titel', 'arbeitgeber', and 'arbeitsort' of the available jobs and aggressively select all refnr IDs that could even remotely fit.
     """
 
-    print("Stage 1: Shortlisting all potentially fitting candidates from summary data using OpenAI...")
-    
+    print(
+        "Stage 1: Shortlisting all potentially fitting candidates from summary data using OpenAI..."
+    )
+
     for attempt in range(3):
         try:
             response1 = client.beta.chat.completions.parse(
-                model='gpt-5.2',
+                model="gpt-5.2",
                 messages=[{"role": "user", "content": stage1_prompt}],
                 response_format=Stage1Response,
             )
@@ -205,25 +240,33 @@ def shortlist_candidates(client: OpenAI, summary_data: Dict[str, Any], candidate
             print(f"Stage 1 Shortlisted {len(shortlist)} candidates.")
             return shortlist
         except Exception as e:
-            print(f"Error in Stage 1 (attempt {attempt+1}): {e}")
+            print(f"Error in Stage 1 (attempt {attempt + 1}): {e}")
             if attempt == 2:
                 sys.exit(1)
 
 
-def fetch_deep_dive_details(summary_data: Dict[str, Any], shortlist: List[str]) -> List[Dict[str, Any]]:
+def fetch_deep_dive_details(
+    summary_data: Dict[str, Any], shortlist: List[str]
+) -> List[Dict[str, Any]]:
     deep_dive_candidates = []
-    jobs_to_fetch = [job for job in summary_data.get('candidates', []) if job.get('refnr') in shortlist]
-    
-    print(f"Fetching full details for {len(jobs_to_fetch)} shortlisted candidates concurrently...")
+    jobs_to_fetch = [
+        job
+        for job in summary_data.get("candidates", [])
+        if job.get("refnr") in shortlist
+    ]
+
+    print(
+        f"Fetching full details for {len(jobs_to_fetch)} shortlisted candidates concurrently..."
+    )
 
     def fetch_job_details(job: Dict[str, Any]) -> Dict[str, Any]:
-        refnr = job.get('refnr')
+        refnr = job.get("refnr")
         ort = job.get("arbeitsort", "")
         if isinstance(ort, dict):
             ort = ort.get("ort", "")
-        
+
         detail = fetch_detail_context(refnr)
-        
+
         return {
             "refnr": refnr,
             "titel": job.get("titel"),
@@ -231,7 +274,7 @@ def fetch_deep_dive_details(summary_data: Dict[str, Any], shortlist: List[str]) 
             "arbeitsort": ort,
             "description_full": detail.get("description_full", ""),
             "detail_url": detail.get("detail_url", ""),
-            "vertragsdauer_detail": detail.get("vertragsdauer_detail", "")
+            "vertragsdauer_detail": detail.get("vertragsdauer_detail", ""),
         }
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -242,7 +285,9 @@ def fetch_deep_dive_details(summary_data: Dict[str, Any], shortlist: List[str]) 
     return deep_dive_candidates
 
 
-def evaluate_top_jobs(client: OpenAI, candidate_profile: str, deep_dive_candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def evaluate_top_jobs(
+    client: OpenAI, candidate_profile: str, deep_dive_candidates: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     stage2_prompt = f"""
     You are a specialized Job Search Agent. Your goal is to select the most relevant jobs from the shortlisted candidates. You can select fewer or more depending on how many truly excellent matches there are (e.g., 2 to 5 jobs).
 
@@ -259,12 +304,12 @@ def evaluate_top_jobs(client: OpenAI, candidate_profile: str, deep_dive_candidat
     Provide a compelling reason for each selection explaining why it fits the user perfectly.
     """
 
-    print(f"Stage 2: Evaluating full descriptions to select the best job matches...")
-    
+    print("Stage 2: Evaluating full descriptions to select the best job matches...")
+
     for attempt in range(3):
         try:
             response2 = client.beta.chat.completions.parse(
-                model='gpt-5.2',
+                model="gpt-5.2",
                 messages=[{"role": "user", "content": stage2_prompt}],
                 response_format=Stage2Response,
             )
@@ -272,12 +317,14 @@ def evaluate_top_jobs(client: OpenAI, candidate_profile: str, deep_dive_candidat
             final_jobs = [j.model_dump() for j in final_jobs_models]
             return final_jobs
         except Exception as e:
-            print(f"Error in Stage 2 (attempt {attempt+1}): {e}")
+            print(f"Error in Stage 2 (attempt {attempt + 1}): {e}")
             if attempt == 2:
                 sys.exit(1)
 
 
-def build_and_save_reports(final_jobs: List[Dict[str, Any]], deep_dive_candidates: List[Dict[str, Any]]):
+def build_and_save_reports(
+    final_jobs: List[Dict[str, Any]], deep_dive_candidates: List[Dict[str, Any]]
+):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     reports_dir = get_reports_dir()
     report_path = reports_dir / f"job_report_{timestamp}.md"
@@ -293,32 +340,36 @@ def build_and_save_reports(final_jobs: List[Dict[str, Any]], deep_dive_candidate
         report_content += f"## {i}. {job['title']}\n"
         report_content += f"**Arbeitgeber:** {job['employer']}\n"
         report_content += f"**Standort:** {job['location']}\n"
-        report_content += f"**Link:** [Stellenanzeige Agentur für Arbeit]({job['detail_url']})\n\n"
+        report_content += (
+            f"**Link:** [Stellenanzeige Agentur für Arbeit]({job['detail_url']})\n\n"
+        )
         report_content += f"**Warum diese Stelle passt:**\n{job['reason']}\n\n"
         report_content += "---\n\n"
 
         # HTML Part
         jobs_html_blocks.append(f"""
         <div class="job-item">
-            <h2 class="job-title"><a href="{job['detail_url']}">{job['title']}</a></h2>
+            <h2 class="job-title"><a href="{job["detail_url"]}">{job["title"]}</a></h2>
             <div class="job-meta">
-                <div>🏢 <b>{job['employer']}</b></div>
-                <div>📍 {job['location']}</div>
+                <div>🏢 <b>{job["employer"]}</b></div>
+                <div>📍 {job["location"]}</div>
             </div>
             <div class="reason-text">
-                {job['reason']}
+                {job["reason"]}
             </div>
             <div class="action-link">
-                <a href="{job['detail_url']}">→ Zur Stellenanzeige</a>
+                <a href="{job["detail_url"]}">→ Zur Stellenanzeige</a>
             </div>
         </div>
         """)
 
-        matches_to_log.append({
-            "company": job['employer'],
-            "role": job['title'],
-            "refnr": job.get('refnr', '')
-        })
+        matches_to_log.append(
+            {
+                "company": job["employer"],
+                "role": job["title"],
+                "refnr": job.get("refnr", ""),
+            }
+        )
 
     # Read the HTML Template
     template_path = os.path.join(os.path.dirname(__file__), "report_template.html")
@@ -327,7 +378,9 @@ def build_and_save_reports(final_jobs: List[Dict[str, Any]], deep_dive_candidate
             html_template = tf.read()
     else:
         # Fallback minimal template
-        html_template = "<html><body><h1>{job_count} Jobs</h1>\n{jobs_html}</body></html>"
+        html_template = (
+            "<html><body><h1>{job_count} Jobs</h1>\n{jobs_html}</body></html>"
+        )
 
     # Use .replace() instead of .format() to avoid throwing KeyErrors on CSS curly braces
     html_content = html_template.replace("{job_count}", str(len(final_jobs)))
@@ -338,7 +391,7 @@ def build_and_save_reports(final_jobs: List[Dict[str, Any]], deep_dive_candidate
         f.write(report_content)
     with open(html_report_path, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     print(f"Generated Markdown report at {report_path}")
     print(f"Generated temporary HTML report at {html_report_path}")
 
@@ -355,13 +408,15 @@ def generate_report():
 
     # Before generating report, we dynamically fetch jobs directly from Python
     summary_data = fetch_jobs_dynamically()
-    
+
     # 120s timeout for network requests so it doesn't hang indefinitely, but gives large requests time to finish
     client = OpenAI(timeout=120.0)
 
     candidate_profile, past_suggestions = read_profile_context()
 
-    shortlist = shortlist_candidates(client, summary_data, candidate_profile, past_suggestions)
+    shortlist = shortlist_candidates(
+        client, summary_data, candidate_profile, past_suggestions
+    )
     if not shortlist:
         print("No candidates found in Stage 1.")
         return
@@ -381,16 +436,19 @@ def generate_report():
 
 def fetch_jobs_dynamically():
     import shlex
+
     terms_str = os.getenv("SEARCH_TERMS", "")
     terms = shlex.split(terms_str) if terms_str else [""]
     where = os.getenv("SEARCH_WHERE", "Berlin")
     radius_km = int(os.getenv("SEARCH_RADIUS_KM", 40))
     days = int(os.getenv("SEARCH_DAYS", 1))
-    
+
     raw_jobs: List[Dict] = []
     query_count = 0
 
-    print(f"Executing API search for terms: {terms} around {where} ({radius_km}km) within {days} days...")
+    print(
+        f"Executing API search for terms: {terms} around {where} ({radius_km}km) within {days} days..."
+    )
 
     for term in terms:
         page = 1
@@ -407,7 +465,10 @@ def fetch_jobs_dynamically():
                 )
                 query_count += 1
             except Exception as exc:
-                print(f"[warn] query failed term='{term}' page={page}: {exc}", file=sys.stderr)
+                print(
+                    f"[warn] query failed term='{term}' page={page}: {exc}",
+                    file=sys.stderr,
+                )
                 break
 
             raw_jobs.extend(jobs)
@@ -426,7 +487,7 @@ def fetch_jobs_dynamically():
         deduped[refnr] = choose_stronger(current, job) if current else job
 
     selected_jobs = list(deduped.values())
-    
+
     candidates_summary: List[Dict] = []
     for job in selected_jobs:
         refnr = job.get("refnr", "")
@@ -444,7 +505,7 @@ def fetch_jobs_dynamically():
         candidates_summary.append(summary_obj)
 
     generated_at = datetime.now().replace(microsecond=0).isoformat() + "Z"
-    
+
     out_summary = {
         "generated_at": generated_at,
         "source": "jobsuche-api",
@@ -453,11 +514,12 @@ def fetch_jobs_dynamically():
         "raw_result_count": len(raw_jobs),
         "deduped_count": len(deduped),
         "candidate_count": len(selected_jobs),
-        "candidates": candidates_summary
+        "candidates": candidates_summary,
     }
-    
+
     print(f"Found {len(selected_jobs)} unique candidates from the API search.")
     return out_summary
+
 
 if __name__ == "__main__":
     generate_report()

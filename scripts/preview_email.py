@@ -2,25 +2,26 @@
 import os
 import webbrowser
 
+
 def generate_preview():
     # Dummy jobs
     dummy_jobs = [
         {
-            'title': 'Sachbearbeiter*in (w/m/d) IT-Verfahrensbetreuung Wahldatenbank und Fachverfahren',
-            'employer': 'Amt für Statistik Berlin-Brandenburg',
-            'location': 'Berlin',
-            'refnr': '12345-67890-S',
-            'reason': 'Sehr passgenau zu deinem Datenlabor-/Prototyping-Kontext im öffentlichen Dienst: Du betreust und entwickelst eine interne Wahldatenbank samt Schnittstellen/Tools weiter, bereitest Daten auf, testest Funktionalitäten und baust Import/Export-Prozesse (XML/CSV) sowie Skripte für Systemkommunikation. Tech-Stack ist modern und stark Open-Source-fähig (u.a. PostgreSQL/MySQL/MariaDB möglich, Linux, Git, Python/R/JS optional). Rolle ist fachlich-technisch, nicht Beratung, nicht Forschung, und ausdrücklich unbefristet in Berlin.',
-            'detail_url': 'https://www.arbeitsagentur.de/jobsuche/'
+            "title": "Sachbearbeiter*in (w/m/d) IT-Verfahrensbetreuung Wahldatenbank und Fachverfahren",
+            "employer": "Amt für Statistik Berlin-Brandenburg",
+            "location": "Berlin",
+            "refnr": "12345-67890-S",
+            "reason": "Sehr passgenau zu deinem Datenlabor-/Prototyping-Kontext im öffentlichen Dienst: Du betreust und entwickelst eine interne Wahldatenbank samt Schnittstellen/Tools weiter, bereitest Daten auf, testest Funktionalitäten und baust Import/Export-Prozesse (XML/CSV) sowie Skripte für Systemkommunikation. Tech-Stack ist modern und stark Open-Source-fähig (u.a. PostgreSQL/MySQL/MariaDB möglich, Linux, Git, Python/R/JS optional). Rolle ist fachlich-technisch, nicht Beratung, nicht Forschung, und ausdrücklich unbefristet in Berlin.",
+            "detail_url": "https://www.arbeitsagentur.de/jobsuche/",
         },
         {
-            'title': 'IT-Systemadministrator/in (m/w/d) Archivsystem',
-            'employer': 'DRV Berlin-Brandenburg',
-            'location': 'Berlin (oder Frankfurt (Oder))',
-            'refnr': '98765-43210-S',
-            'reason': 'Öffentlicher Dienst, unbefristet, Standort Berlin möglich und stark technisch/hands-on: Linux-Server, Betrieb/Monitoring einer digitalen Archivlösung, Systemanalysen, Automatisierung/DevOps-Ansätze und 2nd-Level-Support. Passt gut, wenn du dich technisch weiterentwickeln willst (Linux, Monitoring, Automatisierung). Kein Beratungsfokus, keine Forschung.',
-            'detail_url': 'https://www.arbeitsagentur.de/jobsuche/'
-        }
+            "title": "IT-Systemadministrator/in (m/w/d) Archivsystem",
+            "employer": "DRV Berlin-Brandenburg",
+            "location": "Berlin (oder Frankfurt (Oder))",
+            "refnr": "98765-43210-S",
+            "reason": "Öffentlicher Dienst, unbefristet, Standort Berlin möglich und stark technisch/hands-on: Linux-Server, Betrieb/Monitoring einer digitalen Archivlösung, Systemanalysen, Automatisierung/DevOps-Ansätze und 2nd-Level-Support. Passt gut, wenn du dich technisch weiterentwickeln willst (Linux, Monitoring, Automatisierung). Kein Beratungsfokus, keine Forschung.",
+            "detail_url": "https://www.arbeitsagentur.de/jobsuche/",
+        },
     ]
 
     jobs_html_blocks = []
@@ -28,16 +29,16 @@ def generate_preview():
         # Exact same HTML structure as in generate_report.py
         jobs_html_blocks.append(f"""
         <div class="job-item">
-            <h2 class="job-title"><a href="{job['detail_url']}">{job['title']}</a></h2>
+            <h2 class="job-title"><a href="{job["detail_url"]}">{job["title"]}</a></h2>
             <div class="job-meta">
-                <div>🏢 <b>{job['employer']}</b></div>
-                <div>📍 {job['location']}</div>
+                <div>🏢 <b>{job["employer"]}</b></div>
+                <div>📍 {job["location"]}</div>
             </div>
             <div class="reason-text">
-                {job['reason']}
+                {job["reason"]}
             </div>
             <div class="action-link">
-                <a href="{job['detail_url']}">→ Zur Stellenanzeige</a>
+                <a href="{job["detail_url"]}">→ Zur Stellenanzeige</a>
             </div>
         </div>
         """)
@@ -57,7 +58,7 @@ def generate_preview():
         f.write(html_content)
 
     print(f"Generated preview at: {preview_path}")
-    
+
     # Try to open in browser automatically
     try:
         file_url = f"file://{os.path.abspath(preview_path)}"
@@ -65,6 +66,7 @@ def generate_preview():
         print("Opened preview in your default browser.")
     except Exception as e:
         print(f"Could not open browser automatically: {e}")
+
 
 if __name__ == "__main__":
     generate_preview()
