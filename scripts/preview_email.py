@@ -6,27 +6,19 @@ def generate_preview():
     # Dummy jobs
     dummy_jobs = [
         {
-            'title': 'Senior Data Scientist (m/w/d)',
-            'employer': 'Tech Corp Berlin',
-            'location': 'Berlin (Mitte)',
-            'refnr': '12345-67890-S',
-            'reason': 'This perfectly matches your background in Python, Machine Learning and Data Analysis. It also offers a permanent contract and is right in your commuting radius.',
-            'detail_url': 'https://www.arbeitsagentur.de/jobsuche/'
-        },
-        {
-            'title': 'Machine Learning Engineer',
-            'employer': 'AI Innovations GmbH',
-            'location': 'Königs Wusterhausen',
-            'refnr': '98765-43210-S',
-            'reason': 'Great opportunity very close to home. The role focuses heavily on predictive modeling and deploying LLMs.',
-            'detail_url': 'https://www.arbeitsagentur.de/jobsuche/'
-        },
-        {
-            'title': 'Data Analyst - Public Sector',
-            'employer': 'Bundesministerium',
+            'title': 'Sachbearbeiter*in (w/m/d) IT-Verfahrensbetreuung Wahldatenbank und Fachverfahren',
+            'employer': 'Amt für Statistik Berlin-Brandenburg',
             'location': 'Berlin',
-            'refnr': '55555-44444-S',
-            'reason': 'Matches your preference for public sector roles with a focus on data analysis and visualization. TV-L 14 salary band.',
+            'refnr': '12345-67890-S',
+            'reason': 'Sehr passgenau zu deinem Datenlabor-/Prototyping-Kontext im öffentlichen Dienst: Du betreust und entwickelst eine interne Wahldatenbank samt Schnittstellen/Tools weiter, bereitest Daten auf, testest Funktionalitäten und baust Import/Export-Prozesse (XML/CSV) sowie Skripte für Systemkommunikation. Tech-Stack ist modern und stark Open-Source-fähig (u.a. PostgreSQL/MySQL/MariaDB möglich, Linux, Git, Python/R/JS optional). Rolle ist fachlich-technisch, nicht Beratung, nicht Forschung, und ausdrücklich unbefristet in Berlin.',
+            'detail_url': 'https://www.arbeitsagentur.de/jobsuche/'
+        },
+        {
+            'title': 'IT-Systemadministrator/in (m/w/d) Archivsystem',
+            'employer': 'DRV Berlin-Brandenburg',
+            'location': 'Berlin (oder Frankfurt (Oder))',
+            'refnr': '98765-43210-S',
+            'reason': 'Öffentlicher Dienst, unbefristet, Standort Berlin möglich und stark technisch/hands-on: Linux-Server, Betrieb/Monitoring einer digitalen Archivlösung, Systemanalysen, Automatisierung/DevOps-Ansätze und 2nd-Level-Support. Passt gut, wenn du dich technisch weiterentwickeln willst (Linux, Monitoring, Automatisierung). Kein Beratungsfokus, keine Forschung.',
             'detail_url': 'https://www.arbeitsagentur.de/jobsuche/'
         }
     ]
