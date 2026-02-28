@@ -1,6 +1,6 @@
 # Jobsuche Agent (Template)
 
-KI-gestützte Jobsuche mit der `jobsuche-api` der Arbeitsagentur + OpenAI-Ranking.
+KI-gestützte Jobsuche mit der [`jobsuche-api`](https://github.com/bundesAPI/jobsuche-api) der Arbeitsagentur + OpenAI-Ranking.
 
 Nutzen Sie dieses Repository als Ausgangspunkt für Ihren eigenen, personalisierten Job-Alert-Workflow.
 
@@ -38,10 +38,10 @@ Abhängigkeiten installieren:
 pip install -r requirements.txt
 ```
 
-Fügen Sie Ihren OpenAI-Schlüssel zur Datei `.env` hinzu und konfigurieren Sie optional das verwendete Modell (Standard ist `gpt-5.2`):
+Fügen Sie Ihren [OpenAI-Schlüssel](https://platform.openai.com/api-keys) zur Datei `.env` hinzu und konfigurieren Sie optional das verwendete Modell (Standard ist `gpt-5.2`):
 
 ```env
-OPENAI_API_KEY=ihr_schluessel_hier
+OPENAI_API_KEY="sk-proj-..."
 OPENAI_MODEL=gpt-5-mini # (oder gpt-5.2)
 ```
 
