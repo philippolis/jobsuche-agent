@@ -38,11 +38,19 @@ Abhängigkeiten installieren:
 pip install -r requirements.txt
 ```
 
-Fügen Sie den passenden API-Schlüssel (z.B. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.) zur Datei `.env` hinzu und konfigurieren Sie zwingend das verwendete Modell:
+Fügen Sie den passenden API-Schlüssel für Ihren gewünschten LLM-Provider zur Datei `.env` hinzu und konfigurieren Sie zwingend das verwendete Modell (`LLM_MODEL`).
 
+Da `litellm` genutzt wird, werden [übliche LLM-Provider out-of-the-box unterstützt](https://models.litellm.ai/) (z.B. OpenAI, Anthropic, Google Gemini, Ollama, Cohere, etc.). Benennen Sie die Env-Variable für Ihren Key einfach nach dem gängigen Standard des Providers (z.B. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`).
+
+Beispiel für `.env`:
 ```env
+# Für OpenAI:
 OPENAI_API_KEY="sk-proj-..."
-LLM_MODEL=gpt-5.2  # oder gemini/..., claude-3-... etc.
+LLM_MODEL=gpt-5.2
+
+# ALTERNATIV für Anthropic:
+# ANTHROPIC_API_KEY="sk-ant-..."
+# LLM_MODEL=claude-3-5-sonnet-20240620
 ```
 
 ## 3) Personalisieren
@@ -79,7 +87,12 @@ Standardzeitplan: jeden Samstag um `05:00 UTC` (passen Sie den Cron-Job bei Beda
 
 Erforderliche Secrets:
 
-- `OPENAI_API_KEY` (oder ein anderer spezifischer API-Schlüssel wie `ANTHROPIC_API_KEY`)
+- `LLM_MODEL` (als Repository Variable oder Secret)
+- Mindestens einen der folgenden API-Schlüssel (je nach gewähltem Modell):
+  - `OPENAI_API_KEY`
+  - `ANTHROPIC_API_KEY`
+  - `GEMINI_API_KEY`
+  - *(Falls Sie einen anderen Provider nutzen, fügen Sie den entsprechenden API-Schlüssel als Secret hinzu und ergänzen Sie ihn in der Datei `.github/workflows/job_search.yml` unter `env` beim Schritt 'Run Job Search Agent'.)*
 - `SMTP_SERVER_ADDRESS`
 - `SMTP_USERNAME`
 - `SMTP_PASSWORD`
