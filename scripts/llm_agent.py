@@ -1,9 +1,9 @@
 import json
 import sys
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from pydantic import BaseModel, Field
 import instructor
-from litellm import completion
+from litellm import completion, completion_cost
 
 try:
     from config import get_llm_model
@@ -34,7 +34,7 @@ def shortlist_relevant_jobs(
     summary_data: Dict[str, Any],
     candidate_profile: str,
     past_suggestions: str,
-) -> List[str]:
+) -> Tuple[List[str], float]:
     """Use the LLM to aggressively shortlist all potentially relevant jobs based on summaries."""
     stage1_prompt = f"""
     You are a specialized Job Search Agent. Your goal is to shortlist ALL jobs from the latest API fetch that could even remotely fit. ("Wähle alle Jobs aus, die auch nur im Entferntesten passen könnten")
@@ -62,14 +62,15 @@ def shortlist_relevant_jobs(
         try:
             # Wrap the dummy client with instructor and litellm
             wrapped_client = instructor.from_litellm(completion)
-            response1 = wrapped_client.chat.completions.create(
+            response1, raw_response1 = wrapped_client.chat.completions.create_with_completion(
                 model=get_llm_model(),
                 messages=[{"role": "user", "content": stage1_prompt}],
                 response_model=Stage1Response,
             )
+            cost = completion_cost(completion_response=raw_response1) or 0.0
             shortlist = response1.shortlisted_refnrs
-            print(f"Stage 1 Shortlisted {len(shortlist)} candidates.")
-            return shortlist
+            print(f"Stage 1 Shortlisted {len(shortlist)} candidates. Cost: ${cost:.4f}")
+            return shortlist, cost
         except Exception as e:
             print(f"Error in Stage 1 (attempt {attempt + 1}): {e}")
             if attempt == 2:
@@ -77,7 +78,7 @@ def shortlist_relevant_jobs(
 
 def select_best_matches(
     client, candidate_profile: str, deep_dive_candidates: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+) -> Tuple[List[Dict[str, Any]], float]:
     """Use the LLM to evaluate full job details and select the absolute best matches."""
     stage2_prompt = f"""
     You are a specialized Job Search Agent. Your goal is to select the most relevant jobs from the shortlisted candidates. You can select fewer or more depending on how many truly excellent matches there are (e.g., 2 to 5 jobs).
@@ -100,14 +101,16 @@ def select_best_matches(
     for attempt in range(3):
         try:
             wrapped_client = instructor.from_litellm(completion)
-            response2 = wrapped_client.chat.completions.create(
+            response2, raw_response2 = wrapped_client.chat.completions.create_with_completion(
                 model=get_llm_model(),
                 messages=[{"role": "user", "content": stage2_prompt}],
                 response_model=Stage2Response,
             )
+            cost = completion_cost(completion_response=raw_response2) or 0.0
             final_jobs_models = response2.top_jobs
             final_jobs = [j.model_dump() for j in final_jobs_models]
-            return final_jobs
+            print(f"Stage 2 evaluated best matches. Cost: ${cost:.4f}")
+            return final_jobs, cost
         except Exception as e:
             print(f"Error in Stage 2 (attempt {attempt + 1}): {e}")
             if attempt == 2:

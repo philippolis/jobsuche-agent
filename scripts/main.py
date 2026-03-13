@@ -95,7 +95,7 @@ def fetch_deep_dive_details(
 
 
 def build_and_save_reports(
-    final_jobs: List[Dict[str, Any]], deep_dive_candidates: List[Dict[str, Any]]
+    final_jobs: List[Dict[str, Any]], deep_dive_candidates: List[Dict[str, Any]], total_cost: float = 0.0
 ):
     """Generate and save the final job recommendations as both Markdown and HTML reports."""
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -126,11 +126,16 @@ def build_and_save_reports(
             }
         )
 
+    if total_cost > 0:
+        report_content += f"\n---\n*Automatisch generiert von Job Alert Agent*\n*LLM Kosten für diesen Durchlauf: ${total_cost:.4f}*\n"
+    else:
+        report_content += f"\n---\n*Automatisch generiert von Job Alert Agent*\n"
+
     # HTML Part: utilizing the new report generator module
     import os
     from pathlib import Path
     template_path = Path(os.path.join(os.path.dirname(__file__), "report_template.html"))
-    html_content = generate_html(final_jobs, template_path)
+    html_content = generate_html(final_jobs, template_path, total_cost=total_cost)
 
     os.makedirs(reports_dir, exist_ok=True)
     with open(report_path, "w", encoding="utf-8") as f:
@@ -161,7 +166,7 @@ def generate_report():
 
     candidate_profile, past_suggestions = read_profile_context()
 
-    shortlist = shortlist_relevant_jobs(
+    shortlist, cost1 = shortlist_relevant_jobs(
         client, summary_data, candidate_profile, past_suggestions
     )
     if not shortlist:
@@ -173,12 +178,13 @@ def generate_report():
         print("No details could be fetched for candidates.")
         return
 
-    final_jobs = select_best_matches(client, candidate_profile, deep_dive_candidates)
+    final_jobs, cost2 = select_best_matches(client, candidate_profile, deep_dive_candidates)
     if not final_jobs:
         print("No candidates selected in Stage 2.")
         return
 
-    build_and_save_reports(final_jobs, deep_dive_candidates)
+    total_cost = cost1 + cost2
+    build_and_save_reports(final_jobs, deep_dive_candidates, total_cost)
 
 
 if __name__ == "__main__":

@@ -61,6 +61,9 @@ python3 scripts/main.py
 Ausgabe:
 
 - `reports/job_report_<zeitstempel>.md`
+- `reports/job_report_<zeitstempel>.html`
+
+*Hinweis zu den Kosten: Die Nutzung der LLM-Modelle ist mit geringen Kosten verbunden. Ein typischer Suchlauf mit `gpt-5.2` kostet in der Regel etwa $0,02. Die Kosten werden im Footer der generierten Reports angegeben.*
 
 
 

@@ -138,8 +138,13 @@
     </div>
     {% endfor %}
 
-    <div class="footer">Automatisch generiert von <a href="https://github.com/philippolis/job-alert-agent">Job
-            Alert Agent</a></div>
+    <div class="footer">
+        Automatisch generiert von <a href="https://github.com/philippolis/job-alert-agent">Job Alert Agent</a>
+        {% if total_cost is defined and total_cost > 0 %}
+        <br>
+        LLM Kosten für diesen Durchlauf: ${{ "%.4f"|format(total_cost) }}
+        {% endif %}
+    </div>
 </body>
 
 </html>
