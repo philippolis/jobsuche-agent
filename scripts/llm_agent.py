@@ -2,7 +2,8 @@ import json
 import sys
 from typing import List, Dict, Any
 from pydantic import BaseModel, Field
-from openai import OpenAI
+import instructor
+from litellm import completion
 
 try:
     from config import get_llm_model
@@ -29,7 +30,7 @@ class Stage2Response(BaseModel):
     top_jobs: List[JobMatch]
 
 def shortlist_relevant_jobs(
-    client: OpenAI,
+    client,
     summary_data: Dict[str, Any],
     candidate_profile: str,
     past_suggestions: str,
@@ -59,12 +60,14 @@ def shortlist_relevant_jobs(
 
     for attempt in range(3):
         try:
-            response1 = client.beta.chat.completions.parse(
+            # Wrap the dummy client with instructor and litellm
+            wrapped_client = instructor.from_litellm(completion)
+            response1 = wrapped_client.chat.completions.create(
                 model=get_llm_model(),
                 messages=[{"role": "user", "content": stage1_prompt}],
-                response_format=Stage1Response,
+                response_model=Stage1Response,
             )
-            shortlist = response1.choices[0].message.parsed.shortlisted_refnrs
+            shortlist = response1.shortlisted_refnrs
             print(f"Stage 1 Shortlisted {len(shortlist)} candidates.")
             return shortlist
         except Exception as e:
@@ -73,7 +76,7 @@ def shortlist_relevant_jobs(
                 sys.exit(1)
 
 def select_best_matches(
-    client: OpenAI, candidate_profile: str, deep_dive_candidates: List[Dict[str, Any]]
+    client, candidate_profile: str, deep_dive_candidates: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
     """Use the LLM to evaluate full job details and select the absolute best matches."""
     stage2_prompt = f"""
@@ -96,12 +99,13 @@ def select_best_matches(
 
     for attempt in range(3):
         try:
-            response2 = client.beta.chat.completions.parse(
+            wrapped_client = instructor.from_litellm(completion)
+            response2 = wrapped_client.chat.completions.create(
                 model=get_llm_model(),
                 messages=[{"role": "user", "content": stage2_prompt}],
-                response_format=Stage2Response,
+                response_model=Stage2Response,
             )
-            final_jobs_models = response2.choices[0].message.parsed.top_jobs
+            final_jobs_models = response2.top_jobs
             final_jobs = [j.model_dump() for j in final_jobs_models]
             return final_jobs
         except Exception as e:

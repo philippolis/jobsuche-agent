@@ -1,13 +1,13 @@
 # Jobsuche Agent (Template)
 
-KI-gestützte Jobsuche mit der [`jobsuche-api`](https://github.com/bundesAPI/jobsuche-api) der Arbeitsagentur + OpenAI-Ranking.
+KI-gestützte Jobsuche mit der [`jobsuche-api`](https://github.com/bundesAPI/jobsuche-api) der Arbeitsagentur + LLM-basiertes Ranking.
 
 Nutzen Sie dieses Repository als Ausgangspunkt für Ihren eigenen, personalisierten Job-Alert-Workflow.
 
 ## Was dieses Projekt macht
 
 - Ruft aktuelle Stellenangebote über die API der Arbeitsagentur ab.
-- Nutzt OpenAI, um basierend auf den Stellenbeschreibungen passende Jobs auszuwählen.
+- Nutzt ein LLM, um basierend auf den Stellenbeschreibungen passende Jobs auszuwählen.
 - Erstellt Markdown-Berichte im Ordner `reports/`.
 - Verfolgt bereits vorgeschlagene Jobs im Ordner `data/`, um Duplikate zu vermeiden.
 - Versendet optional Job-Berichte per E-Mail über GitHub Actions.
@@ -38,11 +38,11 @@ Abhängigkeiten installieren:
 pip install -r requirements.txt
 ```
 
-Fügen Sie Ihren [OpenAI-Schlüssel](https://platform.openai.com/api-keys) zur Datei `.env` hinzu und konfigurieren Sie optional das verwendete Modell (Standard ist `gpt-5.2`):
+Fügen Sie den passenden API-Schlüssel (z.B. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.) zur Datei `.env` hinzu und konfigurieren Sie zwingend das verwendete Modell:
 
 ```env
 OPENAI_API_KEY="sk-proj-..."
-OPENAI_MODEL=gpt-5-mini # (oder gpt-5.2)
+LLM_MODEL=gpt-5.2  # oder gemini/..., claude-3-... etc.
 ```
 
 ## 3) Personalisieren
@@ -76,7 +76,7 @@ Standardzeitplan: jeden Samstag um `05:00 UTC` (passen Sie den Cron-Job bei Beda
 
 Erforderliche Secrets:
 
-- `OPENAI_API_KEY`
+- `OPENAI_API_KEY` (oder ein anderer spezifischer API-Schlüssel wie `ANTHROPIC_API_KEY`)
 - `SMTP_SERVER_ADDRESS`
 - `SMTP_USERNAME`
 - `SMTP_PASSWORD`

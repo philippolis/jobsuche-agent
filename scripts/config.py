@@ -31,8 +31,11 @@ def get_search_config() -> dict:
     return {}
 
 def get_llm_model() -> str:
-    """Get the OpenAI model from the environment with a fallback."""
-    return os.getenv("OPENAI_MODEL") or "gpt-5.2"
+    """Get the LLM model from the environment"""
+    model = os.getenv("LLM_MODEL")
+    if not model:
+        raise ValueError("Missing 'LLM_MODEL' environment variable. Please set it in your .env file.")
+    return model
 
 def get_candidate_profile_path() -> Path:
     """Get the path to the candidate profile Markdown file."""

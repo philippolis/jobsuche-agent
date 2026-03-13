@@ -1,6 +1,6 @@
-openai
-pydantic
 python-dotenv
 Jinja2
 ruff
 PyYAML
+litellm
+instructor
